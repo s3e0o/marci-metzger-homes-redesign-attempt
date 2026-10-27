@@ -1,2 +1,2 @@
-# marci-metzgir-homes-redesign-attempt
+# marci-metzger-homes-redesign-attempt
 A redesign attempt for a real estate website. 
