@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const photos = [
   { src: '/assets/gallery-beacon-ridge-53.jpg', alt: 'Aerial view of a residential community and sports courts near Pahrump' },
@@ -26,12 +26,43 @@ function Brand({ light = false }) {
 
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const menuToggleRef = useRef(null);
+
+  useEffect(() => {
+    let scheduled = false;
+    const updateHeader = () => {
+      if (scheduled) return;
+      scheduled = true;
+      window.requestAnimationFrame(() => {
+        setScrolled((isScrolled) => (isScrolled ? window.scrollY > 32 : window.scrollY > 56));
+        scheduled = false;
+      });
+    };
+
+    updateHeader();
+    window.addEventListener('scroll', updateHeader, { passive: true });
+    return () => window.removeEventListener('scroll', updateHeader);
+  }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') {
+        setMenuOpen(false);
+        menuToggleRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [menuOpen]);
 
   return (
-    <header className="site-header" id="top">
+    <header className={`site-header${scrolled || menuOpen ? ' site-header--scrolled' : ''}`} id="top">
       <div className="header-inner">
         <Brand />
         <button
+          ref={menuToggleRef}
           className="menu-toggle"
           type="button"
           aria-expanded={menuOpen}
@@ -67,7 +98,10 @@ function Hero() {
       <div className="hero__content">
         <p className="eyebrow eyebrow--light">MARCI METZGER - THE RIDGE REALTY GROUP</p>
         <h1 id="hero-title">Pahrump<br /><em>Realtor</em></h1>
-        <a className="button button--light" href="tel:+12069196886">Call Now <span aria-hidden="true">↗</span></a>
+        <div className="hero__actions">
+          <a className="button button--light" href="tel:+12069196886">Call Now <span aria-hidden="true">↗</span></a>
+          <a className="button button--outline-light" href="#search">Find Your Dream Home <span aria-hidden="true">↓</span></a>
+        </div>
       </div>
       <div className="hero__note"><span>Local knowledge</span><span className="hero__rule" /><span>Pahrump, Nevada</span></div>
     </section>
@@ -76,7 +110,7 @@ function Hero() {
 
 function Introduction() {
   return (
-    <section className="intro section-shell" aria-labelledby="intro-title">
+    <section className="intro section-shell" aria-labelledby="intro-title" data-reveal>
       <div className="intro__portrait-wrap">
         <img src="/assets/marci-portrait.jpg" alt="Marci Metzger, Pahrump Realtor" className="intro__portrait" loading="lazy" />
         <span className="intro__portrait-label">Marci Metzger</span>
@@ -96,7 +130,7 @@ function Introduction() {
 
 function SalesSection() {
   return (
-    <section className="sales" id="selling" aria-labelledby="sales-title">
+    <section className="sales" id="selling" aria-labelledby="sales-title" data-reveal>
       <div className="sales__heading section-shell">
         <div>
           <p className="eyebrow">Thoughtful guidance at every step</p>
@@ -110,7 +144,9 @@ function SalesSection() {
       </div>
       <div className="sales-story">
         <article className="story-row">
-          <img src="/assets/gallery-beacon-ridge-53.jpg" alt="Interior of a Pahrump property" loading="lazy" />
+          <div className="story-row__image">
+            <img src="/assets/gallery-beacon-ridge-53.jpg" alt="Interior of a Pahrump property" loading="lazy" />
+          </div>
           <div className="story-copy">
             <span className="story-copy__number">01</span>
           <h3>Don't Just List it...</h3>
@@ -119,7 +155,9 @@ function SalesSection() {
           </div>
         </article>
         <article className="story-row story-row--reverse">
-          <img src="/assets/gallery-ailanto-14.jpg" alt="A home from the original Marci Metzger photo gallery" loading="lazy" />
+          <div className="story-row__image">
+            <img src="/assets/gallery-ailanto-14.jpg" alt="A home from the original Marci Metzger photo gallery" loading="lazy" />
+          </div>
           <div className="story-copy">
             <span className="story-copy__number">02</span>
           <h3>Guide to Buyers</h3>
@@ -134,6 +172,37 @@ function SalesSection() {
 
 function SearchSection() {
   const [message, setMessage] = useState('');
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    let observer;
+    let loadStarted = false;
+    const playVideo = () => {
+      if (!loadStarted) {
+        video.load();
+        loadStarted = true;
+      }
+      video.play().catch(() => {});
+    };
+
+    if ('IntersectionObserver' in window) {
+      observer = new IntersectionObserver(([entry]) => {
+        if (entry.isIntersecting) playVideo();
+        else video.pause();
+      }, { rootMargin: '120px 0px' });
+      observer.observe(video);
+    } else {
+      playVideo();
+    }
+
+    return () => {
+      observer?.disconnect();
+      video.pause();
+    };
+  }, []);
 
   function handleSubmit(event) {
     event.preventDefault();
@@ -141,8 +210,23 @@ function SearchSection() {
   }
 
   return (
-    <section className="search-section" id="search" aria-labelledby="search-title">
-      <div className="search-section__photo" role="img" aria-label="Home from the original Marci Metzger property gallery" />
+    <section className="search-section" id="search" aria-labelledby="search-title" data-reveal>
+      <div className="search-section__photo">
+        <video
+          ref={videoRef}
+          className="search-section__video"
+          muted
+          loop
+          playsInline
+          preload="none"
+          poster="/assets/gallery-beacon-ridge-41.jpg"
+          aria-hidden="true"
+          tabIndex="-1"
+        >
+          <source src="/assets/137210-766502986.mp4" type="video/mp4" />
+          <img src="/assets/gallery-beacon-ridge-41.jpg" alt="Pahrump homes and mountain scenery" />
+        </video>
+      </div>
       <div className="search-panel">
         <p className="eyebrow">Your next chapter starts here</p>
         <h2 id="search-title">Find your<br /><em>dream home</em></h2>
@@ -165,13 +249,25 @@ function SearchSection() {
 
 function Gallery() {
   const [activePhoto, setActivePhoto] = useState(0);
+  const [outgoingPhoto, setOutgoingPhoto] = useState(null);
+  const fadeTimerRef = useRef(null);
+
+  useEffect(() => () => window.clearTimeout(fadeTimerRef.current), []);
+
+  function selectPhoto(nextPhoto) {
+    if (nextPhoto === activePhoto) return;
+    window.clearTimeout(fadeTimerRef.current);
+    setOutgoingPhoto(activePhoto);
+    setActivePhoto(nextPhoto);
+    fadeTimerRef.current = window.setTimeout(() => setOutgoingPhoto(null), 460);
+  }
 
   function move(direction) {
-    setActivePhoto((current) => (current + direction + photos.length) % photos.length);
+    selectPhoto((activePhoto + direction + photos.length) % photos.length);
   }
 
   return (
-    <section className="gallery section-shell" id="gallery" aria-labelledby="gallery-title">
+    <section className="gallery section-shell" id="gallery" aria-labelledby="gallery-title" data-reveal>
       <div className="section-heading">
         <div><p className="eyebrow">A glimpse of what home can be</p><h2 id="gallery-title">Photo <em>gallery</em></h2></div>
         <div className="gallery-controls">
@@ -181,12 +277,19 @@ function Gallery() {
         </div>
       </div>
       <div className="gallery__stage" aria-live="polite">
-        <img src={photos[activePhoto].src} alt={photos[activePhoto].alt} />
+        {outgoingPhoto !== null && (
+          <img className="gallery__photo gallery__photo--outgoing" src={photos[outgoingPhoto].src} alt="" aria-hidden="true" />
+        )}
+        <img
+          className={`gallery__photo${outgoingPhoto !== null ? ' gallery__photo--incoming' : ''}`}
+          src={photos[activePhoto].src}
+          alt={photos[activePhoto].alt}
+        />
         <div className="gallery__caption"><span>Pahrump, Nevada</span><span>Property photography</span></div>
       </div>
       <div className="gallery__thumbnails" aria-label="Choose a gallery photo">
         {photos.map((photo, index) => (
-          <button className={index === activePhoto ? 'is-active' : ''} type="button" key={photo.src} onClick={() => setActivePhoto(index)} aria-label={`Show photo ${index + 1}`} aria-pressed={index === activePhoto}>
+          <button className={index === activePhoto ? 'is-active' : ''} type="button" key={photo.src} onClick={() => selectPhoto(index)} aria-label={`Show photo ${index + 1}`} aria-pressed={index === activePhoto}>
             <img src={photo.src} alt="" loading="lazy" />
           </button>
         ))}
@@ -212,7 +315,7 @@ const services = [
 
 function Services() {
   return (
-    <section className="services" id="services" aria-labelledby="services-title">
+    <section className="services" id="services" aria-labelledby="services-title" data-reveal>
       <div className="section-shell">
         <div className="section-heading section-heading--services">
           <div><p className="eyebrow">Here for the whole journey</p><h2 id="services-title">Our <em>services</em></h2></div>
@@ -240,7 +343,7 @@ function Contact() {
   }
 
   return (
-    <section className="contact" id="contact" aria-labelledby="contact-title">
+    <section className="contact" id="contact" aria-labelledby="contact-title" data-reveal>
       <div className="contact__intro">
         <p className="eyebrow eyebrow--light">Pahrump · Nevada</p>
         <h2 id="contact-title">Call or<br /><em>visit</em></h2>
@@ -261,8 +364,8 @@ function Contact() {
         </form>
       </div>
       <div className="contact__map">
-        <iframe title="Map showing the Marci Metzger office in Pahrump, Nevada" src="https://maps.google.com/maps?q=3190%20HW-160%20Suite%20F%2C%20Pahrump%2C%20NV%2089048&t=&z=13&ie=UTF8&iwloc=&output=embed" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
-        <a href="https://maps.google.com/maps?ll=36.184402,-115.955288&z=14&t=m&hl=en-US&gl=US&mapclient=apiv3" target="_blank" rel="noreferrer">Get directions <span aria-hidden="true">↗</span></a>
+        <iframe title="Map showing the Marci Metzger office in Pahrump, Nevada" src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3299.9407154125015!2d-115.95782812424217!3d36.18425370217817!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x80c639a25ba6af0f%3A0x5c7351dde0fbb39a!2sMarci%20Metzger%20-%20THE%20RIDGE%20REALTY%20GROUP%20-%20B1002787!5e1!3m2!1sen!2sus!4v1793092374713!5m2!1sen!2sus" loading="lazy" referrerPolicy="no-referrer-when-downgrade" />
+        <a href="https://maps.app.goo.gl/LKi4pq6yTuef93986" target="_blank" rel="noreferrer">Get directions <span aria-hidden="true">↗</span></a>
       </div>
     </section>
   );
@@ -283,6 +386,34 @@ function Footer() {
 }
 
 export default function App() {
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return undefined;
+
+    const sections = document.querySelectorAll('[data-reveal]');
+    let observer;
+    try {
+      observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.12, rootMargin: '0px 0px -36px 0px' });
+
+      sections.forEach((section) => {
+        section.classList.add('reveal-ready');
+        observer.observe(section);
+      });
+    } catch {
+      sections.forEach((section) => section.classList.remove('reveal-ready'));
+      observer?.disconnect();
+      return undefined;
+    }
+
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <>
       <a className="skip-link" href="#main-content">Skip to content</a>
