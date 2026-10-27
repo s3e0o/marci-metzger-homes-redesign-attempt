@@ -38,9 +38,8 @@ h2 em, h1 em { font-weight: 400; }
 
 .site-header { position: relative; z-index: 10; background: var(--paper); }
 .header-inner { width: min(1360px, calc(100% - 96px)); height: 94px; margin: auto; display: flex; align-items: center; justify-content: space-between; }
-.brand { position: relative; display: inline-flex; flex-direction: column; width: max-content; color: var(--ink); text-decoration: none; text-transform: uppercase; }
-.brand__name { font-family: var(--serif); font-size: 20px; letter-spacing: .095em; line-height: 1; }
-.brand__home { position: absolute; right: 9px; bottom: -16px; color: var(--olive); font-family: var(--serif); font-size: 20px; font-style: italic; letter-spacing: .01em; line-height: 1; text-transform: none; }
+.brand { display: inline-flex; width: max-content; align-items: center; color: var(--ink); text-decoration: none; }
+.brand__image { width: 235px; height: auto; }
 .main-nav { display: flex; align-items: center; gap: clamp(24px, 4vw, 57px); }
 .main-nav > a { font-size: 10px; font-weight: 600; letter-spacing: .14em; text-decoration: none; text-transform: uppercase; transition: color .2s ease; }
 .main-nav > a:hover { color: var(--olive); }
@@ -166,8 +165,8 @@ h2 em, h1 em { font-weight: 400; }
 .site-footer__top { padding-bottom: 34px; border-bottom: 1px solid #42443d; }
 .footer-brand { display: flex; align-items: center; gap: 16px; }
 .footer-brand img { width: 42px; height: 42px; border-radius: 50%; }
-.brand--light { color: white; }
-.brand--light .brand__home { color: #b5b69e; }
+.brand--light { padding: 7px 10px; background: var(--paper); }
+.brand--light .brand__image { width: 195px; }
 .footer-socials { display: flex; flex-wrap: wrap; gap: 26px; }
 .footer-socials a { color: #d5d4cd; font-size: 9px; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
 .footer-socials a:hover { color: white; }
@@ -195,8 +194,7 @@ h2 em, h1 em { font-weight: 400; }
   html { scroll-padding-top: 74px; }
   .section-shell, .hero__content { width: calc(100% - 40px); }
   .header-inner { width: calc(100% - 40px); height: 76px; }
-  .brand__name { font-size: 17px; }
-  .brand__home { bottom: -14px; font-size: 17px; }
+  .brand__image { width: 190px; }
   .menu-toggle { display: flex; width: 44px; height: 44px; align-items: center; justify-content: center; border: 1px solid var(--line); background: transparent; cursor: pointer; }
   .menu-toggle__icon { display: flex; flex-direction: column; gap: 5px; }
   .menu-toggle__icon i { display: block; width: 17px; height: 1px; background: var(--ink); }

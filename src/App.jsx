@@ -19,8 +19,7 @@ const navigation = [
 function Brand({ light = false }) {
   return (
     <a className={`brand${light ? ' brand--light' : ''}`} href="#top" aria-label="Marci Metzger Homes, home">
-      <span className="brand__name">Marci Metzger</span>
-      <span className="brand__home">Homes</span>
+      <img className="brand__image" src="/assets/marci-metzger-logo.png" alt="" />
     </a>
   );
 }
@@ -68,7 +67,7 @@ function Hero() {
       <div className="hero__content">
         <p className="eyebrow eyebrow--light">MARCI METZGER - THE RIDGE REALTY GROUP</p>
         <h1 id="hero-title">Pahrump<br /><em>Realtor</em></h1>
-        <a className="button button--light" href="tel:+12069196886">Call now <span aria-hidden="true">↗</span></a>
+        <a className="button button--light" href="tel:+12069196886">Call Now <span aria-hidden="true">↗</span></a>
       </div>
       <div className="hero__note"><span>Local knowledge</span><span className="hero__rule" /><span>Pahrump, Nevada</span></div>
     </section>
