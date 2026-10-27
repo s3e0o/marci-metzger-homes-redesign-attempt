@@ -27,23 +27,79 @@ function Brand({ light = false }) {
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const headerRef = useRef(null);
   const menuToggleRef = useRef(null);
+  const headerHideTimerRef = useRef(null);
 
   useEffect(() => {
-    let scheduled = false;
+    const compactViewport = window.matchMedia('(max-width: 900px)');
+    let frameId = null;
+    let lastScrollY = window.scrollY;
+    let latestScrollY = lastScrollY;
+    let initialCheck = true;
+    let hideTriggered = false;
+
+    const clearHideTimer = () => {
+      window.clearTimeout(headerHideTimerRef.current);
+      headerHideTimerRef.current = null;
+    };
+
+    const scheduleHide = () => {
+      if (headerHideTimerRef.current !== null || hideTriggered) return;
+      headerHideTimerRef.current = window.setTimeout(() => {
+        headerHideTimerRef.current = null;
+        if (window.scrollY > 56 && compactViewport.matches && !menuOpen) {
+          hideTriggered = true;
+          setHeaderHidden(true);
+        }
+      }, 2200);
+    };
+
     const updateHeader = () => {
-      if (scheduled) return;
-      scheduled = true;
-      window.requestAnimationFrame(() => {
-        setScrolled((isScrolled) => (isScrolled ? window.scrollY > 32 : window.scrollY > 56));
-        scheduled = false;
+      latestScrollY = window.scrollY;
+      if (frameId !== null) return;
+      frameId = window.requestAnimationFrame(() => {
+        frameId = null;
+        const currentY = latestScrollY;
+        const scrollingDown = currentY > lastScrollY + 2;
+        setScrolled((isScrolled) => (isScrolled ? currentY > 32 : currentY > 56));
+
+        if (menuOpen && scrollingDown) setMenuOpen(false);
+
+        if (!compactViewport.matches) {
+          clearHideTimer();
+          hideTriggered = false;
+          setHeaderHidden(false);
+        } else if (menuOpen || currentY <= 56) {
+          clearHideTimer();
+          hideTriggered = false;
+          setHeaderHidden(false);
+        } else if (scrollingDown) {
+          scheduleHide();
+        } else if (currentY < lastScrollY - 2) {
+          clearHideTimer();
+          hideTriggered = false;
+          setHeaderHidden(false);
+        } else if (initialCheck && currentY > 56) {
+          scheduleHide();
+        }
+
+        lastScrollY = currentY;
+        initialCheck = false;
       });
     };
 
     updateHeader();
     window.addEventListener('scroll', updateHeader, { passive: true });
-    return () => window.removeEventListener('scroll', updateHeader);
-  }, []);
+    window.addEventListener('resize', updateHeader, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', updateHeader);
+      window.removeEventListener('resize', updateHeader);
+      if (frameId !== null) window.cancelAnimationFrame(frameId);
+      clearHideTimer();
+    };
+  }, [menuOpen]);
 
   useEffect(() => {
     if (!menuOpen) return undefined;
@@ -53,12 +109,25 @@ function Header() {
         menuToggleRef.current?.focus();
       }
     };
+    const closeOnOutsidePointer = (event) => {
+      if (!headerRef.current?.contains(event.target)) setMenuOpen(false);
+    };
     window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
+    document.addEventListener('pointerdown', closeOnOutsidePointer);
+    return () => {
+      window.removeEventListener('keydown', closeOnEscape);
+      document.removeEventListener('pointerdown', closeOnOutsidePointer);
+    };
   }, [menuOpen]);
 
   return (
-    <header className={`site-header${scrolled || menuOpen ? ' site-header--scrolled' : ''}`} id="top">
+    <header
+      className={`site-header${scrolled || menuOpen ? ' site-header--scrolled' : ''}${headerHidden ? ' site-header--hidden' : ''}`}
+      id="top"
+      ref={headerRef}
+      aria-hidden={headerHidden}
+      inert={headerHidden}
+    >
       <div className="header-inner">
         <Brand />
         <button
