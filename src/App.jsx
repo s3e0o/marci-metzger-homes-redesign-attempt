@@ -16,9 +16,9 @@ const navigation = [
   { label: 'About Us', href: 'https://marcimetzger.com/about-us' },
 ];
 
-function Brand({ light = false }) {
+function Brand({ light = false, onClick }) {
   return (
-    <a className={`brand${light ? ' brand--light' : ''}`} href="#top" aria-label="Marci Metzger Homes, home">
+    <a className={`brand${light ? ' brand--light' : ''}`} href="#top" onClick={onClick} aria-label="Marci Metzger Homes, back to top">
       <img className="brand__image" src="/assets/marci-metzger-logo.png" alt="" />
     </a>
   );
@@ -27,35 +27,13 @@ function Brand({ light = false }) {
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [headerHidden, setHeaderHidden] = useState(false);
   const headerRef = useRef(null);
   const menuToggleRef = useRef(null);
-  const headerHideTimerRef = useRef(null);
 
   useEffect(() => {
-    const compactViewport = window.matchMedia('(max-width: 900px)');
     let frameId = null;
     let lastScrollY = window.scrollY;
     let latestScrollY = lastScrollY;
-    let initialCheck = true;
-    let hideTriggered = false;
-
-    const clearHideTimer = () => {
-      window.clearTimeout(headerHideTimerRef.current);
-      headerHideTimerRef.current = null;
-    };
-
-    const scheduleHide = () => {
-      if (headerHideTimerRef.current !== null || hideTriggered) return;
-      headerHideTimerRef.current = window.setTimeout(() => {
-        headerHideTimerRef.current = null;
-        if (window.scrollY > 56 && compactViewport.matches && !menuOpen) {
-          hideTriggered = true;
-          setHeaderHidden(true);
-        }
-      }, 2200);
-    };
-
     const updateHeader = () => {
       latestScrollY = window.scrollY;
       if (frameId !== null) return;
@@ -67,26 +45,7 @@ function Header() {
 
         if (menuOpen && scrollingDown) setMenuOpen(false);
 
-        if (!compactViewport.matches) {
-          clearHideTimer();
-          hideTriggered = false;
-          setHeaderHidden(false);
-        } else if (menuOpen || currentY <= 56) {
-          clearHideTimer();
-          hideTriggered = false;
-          setHeaderHidden(false);
-        } else if (scrollingDown) {
-          scheduleHide();
-        } else if (currentY < lastScrollY - 2) {
-          clearHideTimer();
-          hideTriggered = false;
-          setHeaderHidden(false);
-        } else if (initialCheck && currentY > 56) {
-          scheduleHide();
-        }
-
         lastScrollY = currentY;
-        initialCheck = false;
       });
     };
 
@@ -97,7 +56,6 @@ function Header() {
       window.removeEventListener('scroll', updateHeader);
       window.removeEventListener('resize', updateHeader);
       if (frameId !== null) window.cancelAnimationFrame(frameId);
-      clearHideTimer();
     };
   }, [menuOpen]);
 
@@ -122,14 +80,16 @@ function Header() {
 
   return (
     <header
-      className={`site-header${scrolled || menuOpen ? ' site-header--scrolled' : ''}${headerHidden ? ' site-header--hidden' : ''}`}
+      className={`site-header${scrolled || menuOpen ? ' site-header--scrolled' : ''}`}
       id="top"
       ref={headerRef}
-      aria-hidden={headerHidden}
-      inert={headerHidden}
     >
       <div className="header-inner">
-        <Brand />
+        <Brand onClick={(event) => {
+          event.preventDefault();
+          setMenuOpen(false);
+          window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+        }} />
         <button
           ref={menuToggleRef}
           className="menu-toggle"
