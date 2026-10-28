@@ -27,13 +27,22 @@ function Brand({ light = false, onClick }) {
 function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [headerHidden, setHeaderHidden] = useState(false);
   const headerRef = useRef(null);
   const menuToggleRef = useRef(null);
+  const headerHideTimerRef = useRef(null);
 
   useEffect(() => {
+    const compactViewport = window.matchMedia('(max-width: 900px)');
     let frameId = null;
     let lastScrollY = window.scrollY;
     let latestScrollY = lastScrollY;
+
+    const clearHideTimer = () => {
+      window.clearTimeout(headerHideTimerRef.current);
+      headerHideTimerRef.current = null;
+    };
+
     const updateHeader = () => {
       latestScrollY = window.scrollY;
       if (frameId !== null) return;
@@ -41,9 +50,27 @@ function Header() {
         frameId = null;
         const currentY = latestScrollY;
         const scrollingDown = currentY > lastScrollY + 2;
+        const scrollingUp = currentY < lastScrollY - 2;
         setScrolled((isScrolled) => (isScrolled ? currentY > 32 : currentY > 56));
 
-        if (menuOpen && scrollingDown) setMenuOpen(false);
+        if (!compactViewport.matches) {
+          clearHideTimer();
+          setHeaderHidden(false);
+        } else if (menuOpen && scrollingDown) {
+          clearHideTimer();
+          setMenuOpen(false);
+          setHeaderHidden(false);
+        } else if (currentY <= 56 || scrollingUp || menuOpen) {
+          clearHideTimer();
+          setHeaderHidden(false);
+        } else if (scrollingDown) {
+          if (headerHideTimerRef.current === null) {
+            headerHideTimerRef.current = window.setTimeout(() => {
+              headerHideTimerRef.current = null;
+              if (compactViewport.matches && window.scrollY > 56) setHeaderHidden(true);
+            }, 1500);
+          }
+        }
 
         lastScrollY = currentY;
       });
@@ -56,6 +83,7 @@ function Header() {
       window.removeEventListener('scroll', updateHeader);
       window.removeEventListener('resize', updateHeader);
       if (frameId !== null) window.cancelAnimationFrame(frameId);
+      clearHideTimer();
     };
   }, [menuOpen]);
 
@@ -80,7 +108,7 @@ function Header() {
 
   return (
     <header
-      className={`site-header${scrolled || menuOpen ? ' site-header--scrolled' : ''}`}
+      className={`site-header${scrolled || menuOpen ? ' site-header--scrolled' : ''}${headerHidden ? ' site-header--hidden' : ''}`}
       id="top"
       ref={headerRef}
     >
@@ -415,6 +443,15 @@ function Footer() {
 }
 
 export default function App() {
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const updateBackToTop = () => setShowBackToTop(window.scrollY > 450);
+    updateBackToTop();
+    window.addEventListener('scroll', updateBackToTop, { passive: true });
+    return () => window.removeEventListener('scroll', updateBackToTop);
+  }, []);
+
   useEffect(() => {
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || !('IntersectionObserver' in window)) return undefined;
 
@@ -457,6 +494,21 @@ export default function App() {
         <Contact />
       </main>
       <Footer />
+      {showBackToTop && (
+        <button
+          className="back-to-top"
+          type="button"
+          aria-label="Back to top"
+          onClick={() => window.scrollTo({
+            top: 0,
+            behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+          })}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <path d="M12 19V5m-6 6 6-6 6 6" />
+          </svg>
+        </button>
+      )}
     </>
   );
 }
