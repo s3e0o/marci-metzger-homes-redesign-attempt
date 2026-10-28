@@ -158,11 +158,11 @@ h2 em, h1 em { font-weight: 400; }
 @keyframes gallery-photo-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes gallery-photo-out { from { opacity: 1; } to { opacity: 0; } }
 .gallery__caption { position: absolute; right: 20px; bottom: 20px; left: 20px; display: flex; justify-content: space-between; color: white; font-size: 9px; letter-spacing: .14em; text-shadow: 0 1px 6px rgba(0,0,0,.55); text-transform: uppercase; }
-.gallery__thumbnails { display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-top: 13px; }
-.gallery__thumbnails button { padding: 0; border: 0; opacity: .55; background: transparent; cursor: pointer; transition: opacity var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out); }
+.gallery__thumbnails { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; margin-top: 13px; padding: 3px; }
+.gallery__thumbnails button { display: block; min-width: 0; padding: 0; border: 0; opacity: .55; background: transparent; cursor: pointer; transition: opacity var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out); }
 .gallery__thumbnails button:hover { opacity: .85; transform: translateY(-2px); }
 .gallery__thumbnails button.is-active { opacity: 1; outline: 1px solid var(--ink); outline-offset: 3px; }
-.gallery__thumbnails img { height: clamp(55px, 9vw, 95px); object-fit: cover; }
+.gallery__thumbnails img { width: 100%; height: clamp(55px, 9vw, 95px); object-fit: cover; }
 
 .services { padding-block: 112px 126px; background: #e9e7df; }
 .section-heading--services { margin-bottom: 48px; }
@@ -309,8 +309,9 @@ h2 em, h1 em { font-weight: 400; }
   .gallery-controls i { width: 16px; }
   .gallery__stage { height: 390px; }
   .gallery__caption { right: 12px; bottom: 13px; left: 12px; font-size: 8px; }
-  .gallery__thumbnails { grid-template-columns: repeat(6, minmax(60px, 1fr)); gap: 9px; overflow-x: auto; padding: 3px; }
-  .gallery__thumbnails img { width: 68px; height: 58px; }
+  .gallery__thumbnails { display: flex; gap: 9px; overflow-x: auto; }
+  .gallery__thumbnails button { flex: 0 0 68px; }
+  .gallery__thumbnails img { height: 58px; }
   .services { padding-block: 78px 83px; }
   .section-heading--services { align-items: end; }
   .section-heading--services > p { display: none; }
